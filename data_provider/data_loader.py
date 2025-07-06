@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+import os
 import random
 import math
 import torch.nn.functional as F
@@ -9,13 +10,14 @@ from torch.utils.data.dataloader import default_collate
 
 
 def my_collate_func(batchs):
-    features, labels, ids, lengths = zip(*batchs)
-    ids = list(ids)
-    lengths = list(lengths)
+    features = [item['feature'] for item in batchs]
+    labels = [item['label'] for item in batchs]
+    vids = [item['vid'] for item in batchs]
+    lengths = [item['length'] for item in batchs]
     batch_size = len(batchs)
     max_seq_length = max(lengths)  # max length in one batch
 
-    mask_batch = torch.zeros((batch_size, max_seq_length))  # mask
+    mask_batch = torch.zeros((batch_size, max_seq_length), dtype=torch.float)
     fea_batch = []
     label_batch = []
     for i in range(batch_size):
@@ -26,14 +28,14 @@ def my_collate_func(batchs):
     return  dict(
         feature = pad_sequence(fea_batch, batch_first=True, padding_value = 0.).transpose(1, 2),  # (B, D, L)
         label = pad_sequence(label_batch, batch_first=True, padding_value = -100).long(),  # (B, L)
-        id = ids,
+        vid = vids,
         length = lengths,
         mask = mask_batch,  # (B, L)
         )
 
 
 class Dataset_food(Dataset):
-    def __init__(self, root="data/", dataset="50salads", split="1", mode="train"):
+    def __init__(self, root="/mnt/hdd2/Projects_dai/Projects_dai/ASFormer/data/", dataset="50salads", split="1", mode="train"):
         self.root = root
         self.dataset = dataset
         self.split = split
@@ -51,25 +53,23 @@ class Dataset_food(Dataset):
 
         self.vid_list_file = root+dataset+"/splits/"+mode+".split"+split+".bundle"
         self.features_path = root+dataset+"/features/"
-        self.gt_path = root+dataset+"/groundTruth/"
+        self.gt_path = root+dataset+"/groundtruth/"
         self.__read_mapping__()
         self.__read_data__()
         self.num_classes = len(self.actions_dict)  # class num of the dataset
         # self.__show_info__()
 
     def __read_mapping__(self):
-        mapping_file = self.root+self.dataset+"/mapping.txt"
-        file_ptr = open(mapping_file, 'r')
-        actions = file_ptr.read().split('\n')[:-1]
-        file_ptr.close()
+        mapping_file = self.root+ self.dataset + "/mapping.txt"
+        with open(mapping_file, "r", encoding="utf-8") as f:
+            actions = [ln.strip() for ln in f if ln.strip()]   # keep all non‑empty lines
         for a in actions:
             self.actions_dict[a.split()[1]] = int(a.split()[0])
             self.reverse_dict[int(a.split()[0])] = a.split()[1]
 
     def __read_data__(self):
-        file_ptr = open(self.vid_list_file, 'r')
-        self.list_of_examples = file_ptr.read().split('\n')[:-1]
-        file_ptr.close()
+        with open(self.vid_list_file, 'r') as f:
+            self.list_of_examples = [line.strip() for line in f if line.strip()]
     
     def __show_info__(self):
         print("action dict:  ", self.actions_dict)
@@ -84,11 +84,21 @@ class Dataset_food(Dataset):
 
     def __getitem__(self, index):
         vid = self.list_of_examples[index]
-        features = np.load(self.features_path + vid.split('.')[0] + '.npy')
+        feat_base = self.features_path + vid.split('.')[0]
+        if os.path.exists(feat_base + '.npy'):
+            features = np.load(feat_base + '.npy')
+        elif os.path.exists(feat_base + '.pth'):
+            tmp = torch.load(feat_base + '.pth')
+            if isinstance(tmp, torch.Tensor):
+                features = tmp.cpu().numpy()
+            else:
+                features = np.array(tmp)
+        else:
+            raise FileNotFoundError(f"No feature file found for video: {vid}")
         # print(features.shape)  # (D, L)
 
-        file_ptr = open(self.gt_path + vid, 'r')
-        content = file_ptr.read().split('\n')[:-1]
+        with open(self.gt_path + vid + ".txt", "r", encoding="utf-8") as f:
+            content = [ln.strip() for ln in f if ln.strip()]
         classes = np.zeros(min(np.shape(features)[1], len(content)))
         for i in range(len(classes)):
             classes[i] = self.actions_dict[content[i]]
@@ -99,7 +109,12 @@ class Dataset_food(Dataset):
         vlength = np.shape(features_down)[1]
 
         # (D, L), (L), [video id], [video length]
-        return features_down, classes_down, vid, vlength
+        return {
+            "feature": features_down,
+            "label": classes_down,
+            "vid": vid,
+            "length": vlength
+        }
 
     def __len__(self):
         return len(self.list_of_examples)
@@ -118,6 +133,7 @@ class Dataset_toy(Dataset):
         if dataset == "50salads":
             self.sample_rate = 2
         self.vid_list_file = root+dataset+"/splits/"+mode+".split"+split+".bundle"
+        # if mode == test
         self.features_path = root+dataset+"/features/"
         self.gt_path = root+dataset+"/groundTruth/"
         self.__read_mapping__()
@@ -128,16 +144,16 @@ class Dataset_toy(Dataset):
     def __read_mapping__(self):
         mapping_file = self.root+self.dataset+"/mapping.txt"
         file_ptr = open(mapping_file, 'r')
-        actions = file_ptr.read().split('\n')[:-1]
+        with open(mapping_file, "r", encoding="utf-8") as f:
+            actions = [ln.strip() for ln in f if ln.strip()]   # 既去掉空串，又保留末尾数据
         file_ptr.close()
         for a in actions:
             self.actions_dict[a.split()[1]] = int(a.split()[0])
             self.reverse_dict[int(a.split()[0])] = a.split()[1]
 
     def __read_data__(self):
-        file_ptr = open(self.vid_list_file, 'r')
-        self.list_of_examples = file_ptr.read().split('\n')[:-1]
-        file_ptr.close()
+        with open(self.vid_list_file, "r", encoding="utf-8") as f:
+            self.list_of_examples = [ln.strip() for ln in f if ln.strip()]
     
     def __show_info__(self):
         print("action dict:  ", self.actions_dict)
@@ -152,11 +168,21 @@ class Dataset_toy(Dataset):
 
     def __getitem__(self, index):
         vid = self.list_of_examples[index]
-        features = np.load(self.features_path + vid.split('.')[0] + '.npy')
+        feat_base = self.features_path + vid.split('.')[0]
+        if os.path.exists(feat_base + '.npy'):
+            features = np.load(feat_base + '.npy')
+        elif os.path.exists(feat_base + '.pth'):
+            tmp = torch.load(feat_base + '.pth')
+            if isinstance(tmp, torch.Tensor):
+                features = tmp.cpu().numpy()
+            else:
+                features = np.array(tmp)
+        else:
+            raise FileNotFoundError(f"No feature file found for video: {vid}")
         # print(features.shape)  # (D, L)
 
-        file_ptr = open(self.gt_path + vid, 'r')
-        content = file_ptr.read().split('\n')[:-1]
+        with open(self.gt_path + vid, "r", encoding="utf-8") as f:
+            content = [ln.strip() for ln in f if ln.strip()]
         classes = np.zeros(min(np.shape(features)[1], len(content)))
         for i in range(len(classes)):
             classes[i] = self.actions_dict[content[i]]
@@ -167,14 +193,19 @@ class Dataset_toy(Dataset):
         vlength = np.shape(features_down)[1]
 
         # (D, L), (L), [video id], [video length]
-        return features_down, classes_down, vid, vlength
+        return {
+            "feature": features_down,
+            "label": classes_down,
+            "vid": vid,
+            "length": vlength
+        }
 
     def __len__(self):
         return len(self.list_of_examples)
 
 
 if __name__ == '__main__':
-    mydataset = Dataset_food(root='/data1/other/EUT/data/', dataset="breakfast")
+    mydataset = Dataset_food(root='/mnt/hdd2/Projects_dai/Projects_dai/ASFormer/data/', dataset="surgery_I3D_new")
     print(mydataset[5])
     train_loader = torch.utils.data.DataLoader(
         mydataset,
@@ -185,6 +216,6 @@ if __name__ == '__main__':
     for i, d in enumerate(train_loader):
         print(d['feature'].shape)
         print(d['label'].shape)
-        print(d['id'])
+        print(d['vid'])
         print(d['length'])
         print(d['mask'].shape)

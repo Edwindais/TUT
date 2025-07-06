@@ -11,7 +11,7 @@ def data_provider(args, mode):
         shuffle_flag = True
         batch_size = args.bz
     
-    if args.dataset in ['gtea', '50salads', 'breakfast']:
+    if args.dataset in ['gtea', '50salads', 'breakfast','surgery_I3D_new']:
         data_set = Dataset_food(
             root=args.root_path,
             dataset=args.dataset,

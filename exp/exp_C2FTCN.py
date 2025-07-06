@@ -6,8 +6,8 @@ from loguru import logger
 import numpy as np
 from tqdm import tqdm
 
-from models.ASFormer import ASFormer
-from models.C2FTCN import C2F_TCN
+from models_v1.ASFormer import ASFormer
+from models_v1.C2FTCN import C2F_TCN
 
 from data_provider.data_factor import data_provider
 

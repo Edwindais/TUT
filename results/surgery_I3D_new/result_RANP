@@ -1,0 +1,81 @@
+🔮 开始对 Split 1 2 3 4 5 进行预测
+
+➡️ [PREDICT] Split 1
+Model Size:  653456
+test 3
+used model 85
+⚠️  y_pred contains classes not present in y_true: [8, 10]
+  
+✔️ Prediction Finished in 23.03s
+📊 Frame-level Accuracy:          0.5383
+📈 Frame-level F1 (macro):        0.4146
+🔄 Frame-level Balanced-Acc:      0.4811
+⭐ Frame-level mAP:               0.2763
+🎯 Segment-level F1 @ IoU 10%:   0.6609
+🎯 Segment-level F1 @ IoU 25%:   0.5698
+🎯 Segment-level F1 @ IoU 50%:   0.3605
+✏️ Segment-level Edit Score:      0.6170
+
+➡️ [PREDICT] Split 2
+Model Size:  653456
+test 3
+used model 95
+⚠️  y_pred contains classes not present in y_true: [8, 10]
+  
+✔️ Prediction Finished in 22.97s
+📊 Frame-level Accuracy:          0.5249
+📈 Frame-level F1 (macro):        0.4174
+🔄 Frame-level Balanced-Acc:      0.4767
+⭐ Frame-level mAP:               0.2816
+🎯 Segment-level F1 @ IoU 10%:   0.6952
+🎯 Segment-level F1 @ IoU 25%:   0.6132
+🎯 Segment-level F1 @ IoU 50%:   0.4126
+✏️ Segment-level Edit Score:      0.6425
+
+➡️ [PREDICT] Split 3
+Model Size:  653456
+test 3
+used model 20
+⚠️  y_pred contains classes not present in y_true: [10]
+  
+✔️ Prediction Finished in 22.52s
+📊 Frame-level Accuracy:          0.4820
+📈 Frame-level F1 (macro):        0.3782
+🔄 Frame-level Balanced-Acc:      0.4051
+⭐ Frame-level mAP:               0.2183
+🎯 Segment-level F1 @ IoU 10%:   0.6301
+🎯 Segment-level F1 @ IoU 25%:   0.5533
+🎯 Segment-level F1 @ IoU 50%:   0.3919
+✏️ Segment-level Edit Score:      0.6597
+
+➡️ [PREDICT] Split 4
+Model Size:  653456
+test 3
+used model 35
+⚠️  y_pred contains classes not present in y_true: [10]
+  
+✔️ Prediction Finished in 22.51s
+📊 Frame-level Accuracy:          0.5508
+📈 Frame-level F1 (macro):        0.4712
+🔄 Frame-level Balanced-Acc:      0.5221
+⭐ Frame-level mAP:               0.2781
+🎯 Segment-level F1 @ IoU 10%:   0.6762
+🎯 Segment-level F1 @ IoU 25%:   0.5886
+🎯 Segment-level F1 @ IoU 50%:   0.3438
+✏️ Segment-level Edit Score:      0.6684
+
+➡️ [PREDICT] Split 5
+Model Size:  653456
+test 3
+used model 45
+⚠️  y_pred contains classes not present in y_true: [8, 10]
+  
+✔️ Prediction Finished in 22.98s
+📊 Frame-level Accuracy:          0.5407
+📈 Frame-level F1 (macro):        0.4275
+🔄 Frame-level Balanced-Acc:      0.4791
+⭐ Frame-level mAP:               0.2738
+🎯 Segment-level F1 @ IoU 10%:   0.6592
+🎯 Segment-level F1 @ IoU 25%:   0.5690
+🎯 Segment-level F1 @ IoU 50%:   0.3662
+✏️ Segment-level Edit Score:      0.6683
